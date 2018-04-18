@@ -24,7 +24,7 @@ class Request
 	Time startTimeOfCurQuantum;
 
 public:
-	Request(User* user, Time curTime, Time serviceTime);
+	Request(User* user, Time curTime);
 
 	RequestStatus getStatus() const;
 	bool isExecuting() const;

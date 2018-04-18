@@ -20,7 +20,7 @@ EventType Event::getType()
 	return type;
 }
 
-void* Event::getPointer()
+void* Event::getPtr()
 {
 	return ptr;
 }

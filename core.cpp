@@ -30,7 +30,7 @@ Request* Core::getCurrentExecutingRequest()
 	return (*currentThreadIter)->getRequest();
 }
 
-// TO DO: Keep In mind context switch overhead
+// TODO(distribution): Keep In mind context switch overhead
 void Core::scheduleThread(Time t)
 {
 	if (threads.size() == 0)

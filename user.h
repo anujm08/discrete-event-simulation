@@ -20,8 +20,7 @@ public:
 	User();
 
 	Time startThinking(Time t);
-
-	void setIssuedReq(Request* req);
+	Request* issueRequest(Time t);
 };
 
 #endif

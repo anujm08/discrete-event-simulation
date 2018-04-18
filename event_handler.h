@@ -29,7 +29,7 @@ public:
 	
 	Time getTime();
 	EventType getType();
-	void* getPointer();
+	void* getPtr();
 	
 	bool operator< (const Event& e) const;
 };

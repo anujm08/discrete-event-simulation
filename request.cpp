@@ -1,13 +1,14 @@
 #include "request.h"
 
-Request::Request(User* user, Time curTime, Time serviceTime)
+Request::Request(User* user, Time curTime)
 {
 	status = GOOD;
 	executing = false;
 	issuer = user;
 	assignedThread = nullptr;
 	arrivalTime = curTime;
-	remainingServiceTime = serviceTime;
+	//TODO(Distribution) : service Time
+	remainingServiceTime = 1.0;
 	startTimeOfCurQuantum = -1;
 }
 

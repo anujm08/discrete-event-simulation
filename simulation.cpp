@@ -71,6 +71,7 @@ public:
 		{
 			buffer.push(req);
 		}
+		return 0;
 	}
 
 	void assignNextRequest(Time t)
@@ -134,7 +135,7 @@ public:
 		}
 	}
 
-	void updateReqDropped(Time t)
+	void incrementReqDropped()
 	{
 		numReqDropped++;
 	}
@@ -158,7 +159,6 @@ public:
 		for (int i = 0; i < numUsers; i++)
 		{
 			queuingNetwork.startUserThinking(i, simulationTime);
-
 		}
 	}
 
@@ -166,7 +166,43 @@ public:
 	{
 		while(simulationTime < endTIme)
 		{
+			Event e = EventHandler::getInstance()->getNextEvent();
+			lastEventTime = simulationTime;
+			simulationTime = e.getTime();
 
+			metrics.updateAreaMetric(queuingNetwork, simulationTime);
+			
+			switch (e.getType())
+			{
+				case NEW_REQ:
+				{
+					User* user = (User*) e.getPtr();
+					// TODO check error in casting
+					Request* req = user->issueRequest(simulationTime);
+					int addStatus = queuingNetwork.addRequest(req, simulationTime);
+					if (addStatus != 0)
+					{
+						metrics.incrementReqDropped();
+					}
+					break;
+				}
+				case REQ_COMP:
+				{
+					Request* req = (Request*) e.getPtr();
+					User* user = req->getIssuer();
+					metrics.updateReqComp(req, simulationTime);
+					user->startThinking(simulationTime);
+					break;
+				}
+				case REQ_TOUT:
+				{
+					break;
+				}
+				case CTX_SWTCH:
+				{
+					break;
+				}
+			}
 		}
 	}
 };

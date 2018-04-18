@@ -10,7 +10,7 @@ User::User()
 
 Time User::startThinking(Time t)
 {
-	// TODO(Distribution)
+	// TODO(Distribution): Think Time
 	if (issuedReq != nullptr)
 	{
 		issuedReq->setStatus(BAD);
@@ -20,8 +20,13 @@ Time User::startThinking(Time t)
 	EventHandler::getInstance()->addNewReqEvent(t + thinkTime, this);
 }
 
-void User::setIssuedReq(Request* req)
+Request* User::issueRequest(Time t)
 {
-	issuedReq = req;
+	issuedReq = new Request(this, t);
+	//TODO(Distribution): Timeout
+	Time timeout = 1.0;
+	EventHandler::getInstance()->addReqTimeOutEvent(t + timeout, issuedReq);
 	status = WAIT;
+
+	return issuedReq;
 }
