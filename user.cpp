@@ -11,10 +11,6 @@ User::User()
 Time User::startThinking(Time t)
 {
 	// TODO(Distribution): Think Time
-	if (issuedReq != nullptr)
-	{
-		issuedReq->setStatus(BAD);
-	}
 	status = THINK;
 	Time thinkTime = 1.0;
 	EventHandler::getInstance()->addNewReqEvent(t + thinkTime, this);

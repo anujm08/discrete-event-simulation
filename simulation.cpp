@@ -83,7 +83,7 @@ public:
 
 		Request* req = buffer.front();
 		buffer.pop();
-		
+
 		if (!server.canAddThread())
 		{
 			cerr<<"Can't assign Request. Already Max Threads\n";
@@ -171,7 +171,7 @@ public:
 			simulationTime = e.getTime();
 
 			metrics.updateAreaMetric(queuingNetwork, simulationTime);
-			
+
 			switch (e.getType())
 			{
 				case NEW_REQ:
@@ -182,24 +182,71 @@ public:
 					int addStatus = queuingNetwork.addRequest(req, simulationTime);
 					if (addStatus != 0)
 					{
+						req->setDropped();
 						metrics.incrementReqDropped();
 					}
 					break;
 				}
 				case REQ_COMP:
 				{
+					// Remove Thread, Assign Next Request from Buffer, User start thinking
 					Request* req = (Request*) e.getPtr();
-					User* user = req->getIssuer();
 					metrics.updateReqComp(req, simulationTime);
+					User* user = req->getIssuer();
+					Thread* thr = req->getThread();
+					Core* core = thr->getCore();
+					core->removeCurrentThread(simulationTime);
+					delete thr;
+					// Delete Request if it has already timed out
+					if (req->getStatus() == BAD)
+					{
+						delete req;
+					}
+					else
+					{
+						req->setCompleted();
+					}
+					//TODO Checks : request is executing,core->curThread is thr
+					queuingNetwork.assignNextRequest(simulationTime);
 					user->startThinking(simulationTime);
 					break;
 				}
 				case REQ_TOUT:
 				{
+					Request* req = (Request*) e.getPtr();
+					if (req->isCompleted())
+					{
+						// Ignore and delete if already completed
+						delete req;
+					}
+					else
+					{
+						if (req->isDropped())
+						{
+							delete req;
+						}
+						else
+						{
+							// Timeout request to update status
+							req->timeout();
+						}
+						// Immediately issue new request by the user
+						User* user = req->getIssuer();
+						// TODO : Check if assumption of zero think time on timeout is correct
+						Request* req = user->issueRequest(simulationTime);
+						int addStatus = queuingNetwork.addRequest(req, simulationTime);
+						if (addStatus != 0)
+						{
+							req->setDropped();
+							metrics.incrementReqDropped();
+						}
+					}
 					break;
 				}
 				case CTX_SWTCH:
 				{
+					Core* core = (Core*) e.getPtr();
+					core->contextSwitch(simulationTime);
 					break;
 				}
 			}

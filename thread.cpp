@@ -12,6 +12,11 @@ Request* Thread::getRequest() const
 	return curRequest;
 }
 
+Core* Thread::getCore() const
+{
+	return affinedCore;
+}
+
 void Thread::stopRequest(Time t)
 {
 	curRequest->fininshRunning(t);

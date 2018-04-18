@@ -1,6 +1,7 @@
 #include <iostream>
 #include "server.h"
 #include "core.h"
+#include "request.h"
 #include "thread.h"
 
 int Server::getCoreWithLeastThread()
@@ -92,5 +93,7 @@ void Server::assignReq(Request* req, Time t)
 
 	int coreIndex = getCoreWithLeastThread();
 	Thread* thr = new Thread(req, &cores[coreIndex]);
+	req->assignThread(thr);
+	numActiveThreads++;
 	cores[coreIndex].addThread(thr, t);
 }

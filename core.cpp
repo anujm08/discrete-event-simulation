@@ -1,5 +1,6 @@
 #include <iostream>
 #include "core.h"
+#include "event_handler.h"
 #include "request.h"
 #include "server.h"
 #include "thread.h"
@@ -56,6 +57,17 @@ void Core::scheduleThread(Time t)
 			status = BUSY;
 			server->incrementCoresInUse();
 		}
+
+		Request* req = thr->getRequest();
+
+		if (server->getTimeQuantum() > req->getRemainingServiceTime())
+		{
+			EventHandler::getInstance()->addReqCompEvent(t + req->getRemainingServiceTime(), req);
+		}
+		else
+		{
+			EventHandler::getInstance()->addContextSwitchEvent(t + server->getTimeQuantum(), this);
+		}
 	}
 
 }
@@ -80,7 +92,7 @@ void Core::contextSwitch(Time t)
 		std::cerr<<"No thread is executing\n";
 		exit(1);
 	}
-	
+
 	Thread* thr = *currentThreadIter;
 	thr->stopRequest(t);
 	currentThreadIter++;

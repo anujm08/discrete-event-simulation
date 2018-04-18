@@ -24,13 +24,13 @@ class Event
 	void* ptr;
 
 public:
-	
+
 	Event(Time t, EventType eType, void* pt);
-	
+
 	Time getTime();
 	EventType getType();
 	void* getPtr();
-	
+
 	bool operator< (const Event& e) const;
 };
 

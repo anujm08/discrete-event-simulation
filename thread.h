@@ -16,6 +16,7 @@ public:
 	Thread(Request* req, Core* core);
 
 	Request* getRequest() const;
+	Core* getCore() const;
 
 	void stopRequest(Time t);
 	void startRequest(Time t);
