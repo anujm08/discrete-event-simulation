@@ -14,7 +14,6 @@ enum RequestStatus : bool
 
 class Request
 {
-	// int ID;
 	RequestStatus status;
 	bool executing;
 	bool completed;

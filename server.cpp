@@ -6,13 +6,13 @@
 
 int Server::getCoreWithLeastThread()
 {
-	int minm = -1;
+	int minm = numActiveThreads;
 	int index = 0;
 	for (int i = 0; i < cores.size(); i++)
 	{
-		if (cores[i].getNumThreads() < minm)
+		if (cores[i]->getNumThreads() < minm)
 		{
-			minm = cores[i].getNumThreads();
+			minm = cores[i]->getNumThreads();
 			index = i;
 		}
 	}
@@ -21,7 +21,11 @@ int Server::getCoreWithLeastThread()
 
 Server::Server(int numCores, Time tQuantum, int threadLimit)
 {
-	cores.resize(numCores, Core(this));
+	cores.reserve(numCores);
+	for (int i = 0; i < numCores; i++)
+	{
+		cores.push_back(new Core(this));
+	}
 	timeQuantum = tQuantum;
 	maxNumThreads = threadLimit;
 	numActiveThreads = 0;
@@ -92,8 +96,8 @@ void Server::assignReq(Request* req, Time t)
 	}
 
 	int coreIndex = getCoreWithLeastThread();
-	Thread* thr = new Thread(req, &cores[coreIndex]);
+	Thread* thr = new Thread(req, cores[coreIndex]);
 	req->assignThread(thr);
 	numActiveThreads++;
-	cores[coreIndex].addThread(thr, t);
+	cores[coreIndex]->addThread(thr, t);
 }

@@ -9,7 +9,7 @@ class Request;
 
 class Server
 {
-	std::vector<Core> cores;
+	std::vector<Core*> cores;
 	Time timeQuantum;
 	int maxNumThreads;
 	int numActiveThreads;

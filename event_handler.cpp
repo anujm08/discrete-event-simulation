@@ -10,24 +10,24 @@ Event::Event(Time t, EventType eType, void* pt)
 	ptr = pt;
 }
 
-Time Event::getTime()
+Time Event::getTime() const
 {
 	return time;
 }
 
-EventType Event::getType()
+EventType Event::getType() const
 {
 	return type;
 }
 
-void* Event::getPtr()
+void* Event::getPtr() const
 {
 	return ptr;
 }
 
 bool Event::operator<(const Event& e) const
 {
-	time < e.time;
+	return time > e.time;
 }
 
 void EventHandler::addNewReqEvent(Time t, User* user)

@@ -27,9 +27,9 @@ public:
 
 	Event(Time t, EventType eType, void* pt);
 
-	Time getTime();
-	EventType getType();
-	void* getPtr();
+	Time getTime() const;
+	EventType getType() const;
+	void* getPtr() const;
 
 	bool operator< (const Event& e) const;
 };

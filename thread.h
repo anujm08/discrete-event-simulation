@@ -8,7 +8,6 @@ typedef double Time;
 
 class Thread
 {
-	// int ID;
 	Request* curRequest;
 	Core* affinedCore;
 

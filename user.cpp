@@ -12,7 +12,7 @@ Time User::startThinking(Time t)
 {
 	// TODO(Distribution): Think Time
 	status = THINK;
-	Time thinkTime = 1.0;
+	Time thinkTime = 1.5;
 	EventHandler::getInstance()->addNewReqEvent(t + thinkTime, this);
 }
 
@@ -20,7 +20,7 @@ Request* User::issueRequest(Time t)
 {
 	issuedReq = new Request(this, t);
 	//TODO(Distribution): Timeout
-	Time timeout = 1.0;
+	Time timeout = 2.5;
 	EventHandler::getInstance()->addReqTimeOutEvent(t + timeout, issuedReq);
 	status = WAIT;
 

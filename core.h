@@ -17,21 +17,20 @@ enum CoreStatus : bool
 
 class Core
 {
-	// int ID;
 	CoreStatus status;
-	std::list<Thread*> threads;
-	std::list<Thread*>::iterator currentThreadIter;
 	Server* server;
 
 public:
+	std::list<Thread*> threads;
+	std::list<Thread*>::iterator currentThreadIter;
 	Core(Server* serverPtr);
+	Core(const Core&) = delete;
 
-	CoreStatus getStatus();
-	int getNumThreads();
+	CoreStatus getStatus() const;
+	int getNumThreads() const;
 
-	Request* getCurrentExecutingRequest();
+	Request* getCurrentExecutingRequest() const;
 
-	// TO DO: Keep In mind context switch overhead
 	void scheduleThread(Time t);
 	void removeCurrentThread(Time t);
 	void contextSwitch(Time t);

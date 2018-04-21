@@ -140,6 +140,22 @@ public:
 		numReqDropped++;
 	}
 
+	void print()
+	{
+		Time totalTime = lastAreaUpdateTime - simStartTime;
+		std::cout<<"Simulation Start Time: " <<simStartTime<<endl;
+		std::cout<<"Simulation End Time: " <<lastAreaUpdateTime<<endl;
+		std::cout<<"Num of good requests completed: " <<numGoodReqCompleted<<endl;
+		std::cout<<"Num of bad requests completed: " <<numBadReqCompleted<<endl;
+		std::cout<<"Num of requests dropped: " <<numReqDropped<<endl;
+		std::cout<<"Response Time of Good Reqs: " <<1.0 * goodRespTimeTotal / numGoodReqCompleted<<endl;
+		std::cout<<"Response Time of Bad Reqs: " <<1.0 * badRespTimeTotal / numBadReqCompleted<<endl;
+		std::cout<<"Response Time of All Reqs: " <<
+			1.0 * (badRespTimeTotal + goodRespTimeTotal) / (numBadReqCompleted + numBadReqCompleted)<<endl;
+		std::cout<<"Average Number of Cores Utilized: "<<coreUtilizationArea / totalTime<<endl;
+		std::cout<<"Average Number of Requests in System: "<<numReqArea / totalTime<<endl;
+	}
+
 };
 
 class Simulation
@@ -162,13 +178,18 @@ public:
 		}
 	}
 
-	void simulate(Time endTIme)
+	void simulate(Time endTime)
 	{
-		while(simulationTime < endTIme)
+		while (true)
 		{
 			Event e = EventHandler::getInstance()->getNextEvent();
 			lastEventTime = simulationTime;
 			simulationTime = e.getTime();
+			if (simulationTime > endTime)
+			{
+				metrics.updateAreaMetric(queuingNetwork, endTime);
+				break;
+			}
 
 			metrics.updateAreaMetric(queuingNetwork, simulationTime);
 
@@ -252,15 +273,24 @@ public:
 			}
 		}
 	}
+
+	void printMetrics()
+	{
+		metrics.print();
+	}
 };
 
 int main()
 {
-	int numUsers = 100;
-	int bufferSize = 60;
-	int numCores = 8;
+	int numUsers = 10;
+	int bufferSize = 5;
+	int numCores = 5;
 	Time tQuantum = 1;
-	int threadLimit = 30;
+	int threadLimit = 5;
+
 	Simulation simulation(numUsers, bufferSize, numCores, tQuantum, threadLimit);
+	simulation.simulate(5.1);
+	simulation.printMetrics();
+
 	return 0;
 }

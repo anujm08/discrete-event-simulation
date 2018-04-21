@@ -12,17 +12,17 @@ Core::Core(Server* serverPtr)
 	currentThreadIter = threads.end();
 }
 
-CoreStatus Core::getStatus()
+CoreStatus Core::getStatus() const
 {
 	return status;
 }
 
-int Core::getNumThreads()
+int Core::getNumThreads() const
 {
 	return threads.size();
 }
 
-Request* Core::getCurrentExecutingRequest()
+Request* Core::getCurrentExecutingRequest() const
 {
 	if (currentThreadIter == threads.end())
 	{
@@ -60,7 +60,7 @@ void Core::scheduleThread(Time t)
 
 		Request* req = thr->getRequest();
 
-		if (server->getTimeQuantum() > req->getRemainingServiceTime())
+		if (req->getRemainingServiceTime() <= server->getTimeQuantum())
 		{
 			EventHandler::getInstance()->addReqCompEvent(t + req->getRemainingServiceTime(), req);
 		}
