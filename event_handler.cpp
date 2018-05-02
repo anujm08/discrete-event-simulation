@@ -20,6 +20,17 @@ EventType Event::getType() const
 	return type;
 }
 
+std::string Event::getEventName() const
+{
+	switch (type)
+	{
+		case NEW_REQ : return "NEW_REQ"; break;
+		case REQ_COMP : return "REQ_COMPLETE"; break;
+		case REQ_TOUT : return "REQ_TIME_OUT"; break;
+		case CTX_SWTCH : return "CONTEXT_SWITCH"; break;
+	}
+}
+
 void* Event::getPtr() const
 {
 	return ptr;

@@ -46,6 +46,11 @@ public:
 		return server.getNumCoresInUse();
 	}
 
+	int getNumActiveThreads() const
+	{
+		return server.getNumActiveThreads();
+	}
+
 	bool canAddReq() const
 	{
 		return buffer.size() < maxBufferSize;
@@ -133,6 +138,11 @@ public:
 			numGoodReqCompleted++;
 			goodRespTimeTotal += t - req->getArrivalTime();
 		}
+		else
+		{
+			numBadReqCompleted++;
+			badRespTimeTotal += t - req->getArrivalTime();
+		}
 	}
 
 	void incrementReqDropped()
@@ -148,10 +158,24 @@ public:
 		std::cout<<"Num of good requests completed: " <<numGoodReqCompleted<<endl;
 		std::cout<<"Num of bad requests completed: " <<numBadReqCompleted<<endl;
 		std::cout<<"Num of requests dropped: " <<numReqDropped<<endl;
-		std::cout<<"Response Time of Good Reqs: " <<1.0 * goodRespTimeTotal / numGoodReqCompleted<<endl;
-		std::cout<<"Response Time of Bad Reqs: " <<1.0 * badRespTimeTotal / numBadReqCompleted<<endl;
-		std::cout<<"Response Time of All Reqs: " <<
-			1.0 * (badRespTimeTotal + goodRespTimeTotal) / (numBadReqCompleted + numBadReqCompleted)<<endl;
+
+		std::cout<<"Response Time of Good Reqs: ";
+		if (numGoodReqCompleted > 0)
+			std::cout<<1.0 * goodRespTimeTotal / numGoodReqCompleted<<""<<endl;
+		else
+			std::cout<<"-"<<endl;
+
+		std::cout<<"Response Time of Bad Reqs: ";
+		if (numBadReqCompleted > 0)
+			std::cout<<1.0 * badRespTimeTotal / numBadReqCompleted<<""<<endl;
+		else
+			std::cout<<"-"<<endl;
+
+		std::cout<<"Response Time of All Reqs: ";
+		if (numGoodReqCompleted + numBadReqCompleted > 0)
+			std::cout<<1.0 * (badRespTimeTotal + goodRespTimeTotal) / (numGoodReqCompleted + numBadReqCompleted)<<endl;
+		else
+			std::cout<<"-"<<endl;
 		std::cout<<"Average Number of Cores Utilized: "<<coreUtilizationArea / totalTime<<endl;
 		std::cout<<"Average Number of Requests in System: "<<numReqArea / totalTime<<endl;
 	}
@@ -164,10 +188,11 @@ class Simulation
 	Time lastEventTime;
 	QueuingNetwork queuingNetwork;
 	Metrics metrics;
+	bool printTrace;
 
 public:
 	// TODO :  Update metrics start time
-	Simulation(int numUsers, int bufferSize, int numCores, Time tQuantum, int threadLimit)
+	Simulation(int numUsers, int bufferSize, int numCores, Time tQuantum, int threadLimit, bool verbose = false)
 	: queuingNetwork(numUsers, bufferSize, numCores, tQuantum, threadLimit), metrics(0.0)
 	{
 		simulationTime = 0.0;
@@ -176,6 +201,7 @@ public:
 		{
 			queuingNetwork.startUserThinking(i, simulationTime);
 		}
+		printTrace = verbose;
 	}
 
 	void simulate(Time endTime)
@@ -251,16 +277,9 @@ public:
 							// Timeout request to update status
 							req->timeout();
 						}
-						// Immediately issue new request by the user
+						// User starts thinking, before resending the request
 						User* user = req->getIssuer();
-						// TODO : Check if assumption of zero think time on timeout is correct
-						Request* req = user->issueRequest(simulationTime);
-						int addStatus = queuingNetwork.addRequest(req, simulationTime);
-						if (addStatus != 0)
-						{
-							req->setDropped();
-							metrics.incrementReqDropped();
-						}
+						user->startThinking(simulationTime);
 					}
 					break;
 				}
@@ -270,6 +289,16 @@ public:
 					core->contextSwitch(simulationTime);
 					break;
 				}
+			}
+
+			if (printTrace)
+			{
+				cout<<"Simulation Time = "<<simulationTime;
+				cout<<" | Event = "<<e.getEventName();
+				cout<<" | Busy Cores = "<<queuingNetwork.getNumCoresInUse();
+				cout<<" | Requests in System = "<<queuingNetwork.getNumReq();
+				cout<<" | Active Threads = "<<queuingNetwork.getNumActiveThreads();
+				cout<<endl;
 			}
 		}
 	}
@@ -282,14 +311,14 @@ public:
 
 int main()
 {
-	int numUsers = 10;
-	int bufferSize = 5;
-	int numCores = 5;
+	int numUsers = 100;
+	int bufferSize = 200;
+	int numCores = 4;
 	Time tQuantum = 1;
-	int threadLimit = 5;
+	int threadLimit = 100;
 
-	Simulation simulation(numUsers, bufferSize, numCores, tQuantum, threadLimit);
-	simulation.simulate(5.1);
+	Simulation simulation(numUsers, bufferSize, numCores, tQuantum, threadLimit, true);
+	simulation.simulate(1000);
 	simulation.printMetrics();
 
 	return 0;

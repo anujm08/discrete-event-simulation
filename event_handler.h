@@ -2,6 +2,7 @@
 #define EVENTHANDLER_H
 
 #include <queue>
+#include <string>
 
 typedef double Time;
 
@@ -29,6 +30,7 @@ public:
 
 	Time getTime() const;
 	EventType getType() const;
+	std::string getEventName() const;
 	void* getPtr() const;
 
 	bool operator< (const Event& e) const;
