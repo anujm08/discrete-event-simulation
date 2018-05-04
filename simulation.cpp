@@ -4,6 +4,7 @@
 #include <list>
 #include <queue>
 #include <cstdlib>
+#include <string>
 #include "event_handler.h"
 #include "core.h"
 #include "request.h"
@@ -26,7 +27,11 @@ public:
 	QueuingNetwork(int numUsers, int bufferSize, int numCores, int threadLimit, Time tQuantum, Time csTime)
 	: server(numCores, threadLimit, tQuantum, csTime)
 	{
-		users.resize(numUsers);
+		users.reserve(numUsers);
+		for (int i = 0; i < numUsers; i++)
+		{
+			users.emplace_back(i);
+		}
 		maxBufferSize = bufferSize;
 	}
 
@@ -236,6 +241,7 @@ public:
 
 			metrics.updateAreaMetric(queuingNetwork, simulationTime);
 
+			string remarks = "";
 			switch (e.getType())
 			{
 				case NEW_REQ:
@@ -244,10 +250,12 @@ public:
 					// TODO check error in casting
 					Request* req = user->issueRequest(simulationTime);
 					int addStatus = queuingNetwork.addRequest(req, simulationTime);
+					remarks = "FROM USER " + to_string(user->getID());
 					if (addStatus != 0)
 					{
 						req->setDropped();
 						metrics.incrementReqDropped(simulationTime);
+						remarks += "--DROPPED";
 					}
 					break;
 				}
@@ -265,12 +273,14 @@ public:
 					if (req->getStatus() == BAD)
 					{
 						delete req;
+						remarks = "BAD REQUEST";
 					}
 					else
 					{
 						// User starts thinking if request wasn't timed out
 						user->startThinking(simulationTime);
 						req->setCompleted();
+						remarks = "GOOD REQUEST of USER " + to_string(user->getID());
 					}
 					queuingNetwork.assignNextRequest(simulationTime);
 					break;
@@ -290,12 +300,15 @@ public:
 						if (req->isDropped())
 						{
 							delete req;
+							remarks = "DROPPED";
 						}
 						else
 						{
 							// Timeout request to update status
 							req->timeout();
+							remarks = "ACTIVE";
 						}
+						remarks += " REQUEST of USER " + to_string(req->getIssuer()->getID());
 						// User starts thinking, before resending the request
 						User* user = req->getIssuer();
 						user->startThinking(simulationTime);
@@ -306,6 +319,7 @@ public:
 				{
 					Core* core = (Core*) e.getPtr();
 					core->contextSwitch(simulationTime);
+					remarks = "CORE " + to_string(core->getID());
 					break;
 				}
 			}
@@ -317,6 +331,7 @@ public:
 				cout << " | Busy Cores = " << queuingNetwork.getNumCoresInUse();
 				cout << " | Requests in System = " << queuingNetwork.getNumReq();
 				cout << " | Active Threads = " << queuingNetwork.getNumActiveThreads();
+				cout << " | Remarks = " << remarks;
 				cout << endl;
 			}
 		}

@@ -3,10 +3,16 @@
 #include "request.h"
 #include "time_distribution.h"
 
-User::User()
+User::User(int userID)
 {
+	id = userID;
 	status = THINK;
 	issuedReq = nullptr;
+}
+
+int User::getID() const
+{
+	return id;
 }
 
 Time User::startThinking(Time t)

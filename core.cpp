@@ -5,8 +5,9 @@
 #include "server.h"
 #include "thread.h"
 
-Core::Core(Server* serverPtr)
+Core::Core(Server* serverPtr, int coreID)
 {
+	id = coreID;
 	status = IDLE;
 	server = serverPtr;
 	currentThreadIter = threads.end();
@@ -17,6 +18,10 @@ CoreStatus Core::getStatus() const
 	return status;
 }
 
+int Core::getID() const
+{
+	return id;
+}
 int Core::getNumThreads() const
 {
 	return threads.size();

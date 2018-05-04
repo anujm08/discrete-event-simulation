@@ -12,13 +12,14 @@ enum UserStatus : bool
 
 class User
 {
-	// int ID;
+	int id;
 	UserStatus status;
 	Request* issuedReq;
 
 public:
-	User();
+	User(int userID);
 
+	int getID() const;
 	Time startThinking(Time t);
 	Request* issueRequest(Time t);
 };

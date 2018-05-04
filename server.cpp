@@ -24,7 +24,7 @@ Server::Server(int numCores, int threadLimit, Time tQuantum, Time csTime)
 	cores.reserve(numCores);
 	for (int i = 0; i < numCores; i++)
 	{
-		cores.push_back(new Core(this));
+		cores.push_back(new Core(this, i));
 	}
 	maxNumThreads = threadLimit;
 	timeQuantum = tQuantum;

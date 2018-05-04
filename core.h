@@ -17,15 +17,17 @@ enum CoreStatus : bool
 
 class Core
 {
+	int id;
 	CoreStatus status;
 	Server* server;
 
 public:
 	std::list<Thread*> threads;
 	std::list<Thread*>::iterator currentThreadIter;
-	Core(Server* serverPtr);
+	Core(Server* serverPtr, int coreID);
 	Core(const Core&) = delete;
 
+	int getID() const;
 	CoreStatus getStatus() const;
 	int getNumThreads() const;
 
