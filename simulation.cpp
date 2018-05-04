@@ -132,8 +132,8 @@ public:
 		{
 			numReqArea += (q.getNumReq() * (t - lastAreaUpdateTime));
 			coreUtilizationArea += (q.getNumCoresInUse() * (t - lastAreaUpdateTime));
+			lastAreaUpdateTime = t;
 		}
-		lastAreaUpdateTime = max(t, lastAreaUpdateTime);
 	}
 
 	void updateReqComp(Request* req, Time t)
@@ -268,17 +268,17 @@ public:
 					}
 					else
 					{
+						// User starts thinking if request wasn't timed out
+						user->startThinking(simulationTime);
 						req->setCompleted();
 					}
-					//TODO Checks : request is executing,core->curThread is thr
 					queuingNetwork.assignNextRequest(simulationTime);
-					user->startThinking(simulationTime);
 					break;
 				}
 				case REQ_TOUT:
 				{
 					Request* req = (Request*) e.getPtr();
-					if (req->isCompleted() || req->isDropped())
+					if (req->isCompleted())
 					{
 						// Ignore and delete if already completed or dropped
 						delete req;
@@ -287,8 +287,15 @@ public:
 					}
 					else
 					{
-						// Timeout request to update status
-						req->timeout();
+						if (req->isDropped())
+						{
+							delete req;
+						}
+						else
+						{
+							// Timeout request to update status
+							req->timeout();
+						}
 						// User starts thinking, before resending the request
 						User* user = req->getIssuer();
 						user->startThinking(simulationTime);
