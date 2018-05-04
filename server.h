@@ -11,6 +11,7 @@ class Server
 {
 	std::vector<Core*> cores;
 	Time timeQuantum;
+	Time contextSwitchTime;
 	int maxNumThreads;
 	int numActiveThreads;
 	int numCoresInUse;
@@ -18,9 +19,10 @@ class Server
 	int getCoreWithLeastThread();
 
 public:
-	Server(int numCores, Time tQuantum, int threadLimit);
+	Server(int numCores, int threadLimit, Time tQuantum, Time csTime);
 
 	Time getTimeQuantum() const;
+	Time getContextSwitchTime() const;
 	int getNumActiveThreads() const;
 	int getMaxNumThreads() const;
 	int getNumCoresInUse() const;

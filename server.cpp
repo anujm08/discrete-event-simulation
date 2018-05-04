@@ -19,15 +19,16 @@ int Server::getCoreWithLeastThread()
 	return index;
 }
 
-Server::Server(int numCores, Time tQuantum, int threadLimit)
+Server::Server(int numCores, int threadLimit, Time tQuantum, Time csTime)
 {
 	cores.reserve(numCores);
 	for (int i = 0; i < numCores; i++)
 	{
 		cores.push_back(new Core(this));
 	}
-	timeQuantum = tQuantum;
 	maxNumThreads = threadLimit;
+	timeQuantum = tQuantum;
+	contextSwitchTime = csTime;
 	numActiveThreads = 0;
 	numCoresInUse = 0;
 }
@@ -35,6 +36,11 @@ Server::Server(int numCores, Time tQuantum, int threadLimit)
 Time Server::getTimeQuantum() const
 {
 	return timeQuantum;
+}
+
+Time Server::getContextSwitchTime() const
+{
+	return contextSwitchTime;
 }
 
 int Server::getNumActiveThreads() const

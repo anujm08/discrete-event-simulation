@@ -1,5 +1,6 @@
 #include <iostream>
 #include "request.h"
+#include "time_distribution.h"
 
 Request::Request(User* user, Time curTime)
 {
@@ -10,8 +11,7 @@ Request::Request(User* user, Time curTime)
 	issuer = user;
 	assignedThread = nullptr;
 	arrivalTime = curTime;
-	//TODO(Distribution) : service Time
-	remainingServiceTime = 1.0;
+	remainingServiceTime = TimeDistribution::getServiceTime();
 	startTimeOfCurQuantum = -1;
 }
 

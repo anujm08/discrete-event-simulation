@@ -44,29 +44,31 @@ void Core::scheduleThread(Time t)
 	}
 	else
 	{
+		Time contextswitchTime = server->getContextSwitchTime();
 		if (currentThreadIter == threads.end())
 		{
 			currentThreadIter = threads.begin();
 		}
 
-		Thread* thr = *currentThreadIter;
-		thr->startRequest(t);
-
 		if (status == IDLE)
 		{
 			status = BUSY;
 			server->incrementCoresInUse();
+			contextswitchTime = 0;
 		}
+
+		Thread* thr = *currentThreadIter;
+		thr->startRequest(t + contextswitchTime);
 
 		Request* req = thr->getRequest();
 
 		if (req->getRemainingServiceTime() <= server->getTimeQuantum())
 		{
-			EventHandler::getInstance()->addReqCompEvent(t + req->getRemainingServiceTime(), req);
+			EventHandler::getInstance()->addReqCompEvent(t + contextswitchTime + req->getRemainingServiceTime(), req);
 		}
 		else
 		{
-			EventHandler::getInstance()->addContextSwitchEvent(t + server->getTimeQuantum(), this);
+			EventHandler::getInstance()->addContextSwitchEvent(t + contextswitchTime + server->getTimeQuantum(), this);
 		}
 	}
 

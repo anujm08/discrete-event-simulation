@@ -9,6 +9,7 @@
 #include "request.h"
 #include "server.h"
 #include "thread.h"
+#include "time_distribution.h"
 #include "user.h"
 using namespace std;
 
@@ -22,8 +23,8 @@ class QueuingNetwork
 	int maxBufferSize;
 
 public:
-	QueuingNetwork(int numUsers, int bufferSize, int numCores, Time tQuantum, int threadLimit)
-	: server(numCores, tQuantum, threadLimit)
+	QueuingNetwork(int numUsers, int bufferSize, int numCores, int threadLimit, Time tQuantum, Time csTime)
+	: server(numCores, threadLimit, tQuantum, csTime)
 	{
 		users.resize(numUsers);
 		maxBufferSize = bufferSize;
@@ -100,7 +101,7 @@ public:
 
 class Metrics
 {
-	Time simStartTime;
+	Time startTime;
 	Time lastAreaUpdateTime;
 	int numGoodReqCompleted;
 	int numBadReqCompleted;
@@ -111,9 +112,9 @@ class Metrics
 	double numReqArea;
 
 public:
-	Metrics(Time startTime)
+	Metrics(Time metricStartTime)
 	{
-		simStartTime = simStartTime;
+		startTime = metricStartTime;
 		lastAreaUpdateTime = -1;
 		numGoodReqCompleted = 0;
 		numBadReqCompleted = 0;
@@ -126,58 +127,74 @@ public:
 
 	void updateAreaMetric(const QueuingNetwork &q, Time t)
 	{
-		numReqArea += (q.getNumReq() * (t - lastAreaUpdateTime));
-		coreUtilizationArea += (q.getNumCoresInUse() * (t - lastAreaUpdateTime));
+		// Update Metrics only after transient period
+		if (t > startTime)
+		{
+			numReqArea += (q.getNumReq() * (t - lastAreaUpdateTime));
+			coreUtilizationArea += (q.getNumCoresInUse() * (t - lastAreaUpdateTime));
+		}
 		lastAreaUpdateTime = t;
 	}
 
 	void updateReqComp(Request* req, Time t)
 	{
-		if (req->getStatus() == GOOD)
+		if (t > startTime)
 		{
-			numGoodReqCompleted++;
-			goodRespTimeTotal += t - req->getArrivalTime();
-		}
-		else
-		{
-			numBadReqCompleted++;
-			badRespTimeTotal += t - req->getArrivalTime();
+			if (req->getStatus() == GOOD)
+			{
+				numGoodReqCompleted++;
+				goodRespTimeTotal += t - req->getArrivalTime();
+			}
+			else
+			{
+				numBadReqCompleted++;
+				badRespTimeTotal += t - req->getArrivalTime();
+			}
 		}
 	}
 
-	void incrementReqDropped()
+	void incrementReqDropped(Time t)
 	{
-		numReqDropped++;
+		if (t > startTime)
+			numReqDropped++;
 	}
 
 	void print()
 	{
-		Time totalTime = lastAreaUpdateTime - simStartTime;
-		std::cout<<"Simulation Start Time: " <<simStartTime<<endl;
-		std::cout<<"Simulation End Time: " <<lastAreaUpdateTime<<endl;
-		std::cout<<"Num of good requests completed: " <<numGoodReqCompleted<<endl;
-		std::cout<<"Num of bad requests completed: " <<numBadReqCompleted<<endl;
-		std::cout<<"Num of requests dropped: " <<numReqDropped<<endl;
+		Time totalTime = lastAreaUpdateTime - startTime;
+		if (totalTime <= 0)
+		{
+			cout<<"Simulation Run time is less than transient time. No results Collected!" << endl;
+			return;
+		}
+		cout << "Metric Start Time: " << startTime << endl;
+		cout << "Metric End Time: " << lastAreaUpdateTime << endl;
+		cout << "Num of good requests completed: " << numGoodReqCompleted << endl;
+		cout << "Num of bad requests completed: " << numBadReqCompleted << endl;
+		cout << "Num of requests dropped: " <<numReqDropped << endl;
+		cout << "Goodput: " << 1.0 * numGoodReqCompleted / totalTime << endl;
+		cout << "Badput: " << 1.0 * numBadReqCompleted / totalTime << endl;
+		cout << "Throughput: " << 1.0 * (numGoodReqCompleted + numBadReqCompleted) / totalTime << endl;
 
-		std::cout<<"Response Time of Good Reqs: ";
+		cout << "Response Time of Good Reqs: ";
 		if (numGoodReqCompleted > 0)
-			std::cout<<1.0 * goodRespTimeTotal / numGoodReqCompleted<<""<<endl;
+			cout << 1.0 * goodRespTimeTotal / numGoodReqCompleted<<"" << endl;
 		else
-			std::cout<<"-"<<endl;
+			cout << "-" << endl;
 
-		std::cout<<"Response Time of Bad Reqs: ";
+		cout << "Response Time of Bad Reqs: ";
 		if (numBadReqCompleted > 0)
-			std::cout<<1.0 * badRespTimeTotal / numBadReqCompleted<<""<<endl;
+			cout << 1.0 * badRespTimeTotal / numBadReqCompleted<<"" << endl;
 		else
-			std::cout<<"-"<<endl;
+			cout << "-" << endl;
 
-		std::cout<<"Response Time of All Reqs: ";
+		cout << "Response Time of All Reqs: ";
 		if (numGoodReqCompleted + numBadReqCompleted > 0)
-			std::cout<<1.0 * (badRespTimeTotal + goodRespTimeTotal) / (numGoodReqCompleted + numBadReqCompleted)<<endl;
+			cout << 1.0 * (badRespTimeTotal + goodRespTimeTotal) / (numGoodReqCompleted + numBadReqCompleted) << endl;
 		else
-			std::cout<<"-"<<endl;
-		std::cout<<"Average Number of Cores Utilized: "<<coreUtilizationArea / totalTime<<endl;
-		std::cout<<"Average Number of Requests in System: "<<numReqArea / totalTime<<endl;
+			cout << "-" << endl;
+		cout << "Average Number of Cores Utilized: " << coreUtilizationArea / totalTime << endl;
+		cout << "Average Number of Requests in System: " << numReqArea / totalTime << endl;
 	}
 
 };
@@ -192,8 +209,8 @@ class Simulation
 
 public:
 	// TODO :  Update metrics start time
-	Simulation(int numUsers, int bufferSize, int numCores, Time tQuantum, int threadLimit, bool verbose = false)
-	: queuingNetwork(numUsers, bufferSize, numCores, tQuantum, threadLimit), metrics(0.0)
+	Simulation(int numUsers, int bufferSize, int numCores, int threadLimit, Time tQuantum, Time csTime, Time transientTime, bool verbose = false)
+	: queuingNetwork(numUsers, bufferSize, numCores, threadLimit, tQuantum, csTime), metrics(transientTime)
 	{
 		simulationTime = 0.0;
 		lastEventTime = 0.0;
@@ -230,7 +247,7 @@ public:
 					if (addStatus != 0)
 					{
 						req->setDropped();
-						metrics.incrementReqDropped();
+						metrics.incrementReqDropped(simulationTime);
 					}
 					break;
 				}
@@ -293,12 +310,12 @@ public:
 
 			if (printTrace)
 			{
-				cout<<"Simulation Time = "<<simulationTime;
-				cout<<" | Event = "<<e.getEventName();
-				cout<<" | Busy Cores = "<<queuingNetwork.getNumCoresInUse();
-				cout<<" | Requests in System = "<<queuingNetwork.getNumReq();
-				cout<<" | Active Threads = "<<queuingNetwork.getNumActiveThreads();
-				cout<<endl;
+				cout << "Simulation Time = " << simulationTime;
+				cout << " | Event = " << e.getEventName();
+				cout << " | Busy Cores = " << queuingNetwork.getNumCoresInUse();
+				cout << " | Requests in System = " << queuingNetwork.getNumReq();
+				cout << " | Active Threads = " << queuingNetwork.getNumActiveThreads();
+				cout << endl;
 			}
 		}
 	}
@@ -311,14 +328,37 @@ public:
 
 int main()
 {
-	int numUsers = 100;
+	int seed = 0;
+	int numUsers = 20;
 	int bufferSize = 200;
-	int numCores = 4;
-	Time tQuantum = 1;
-	int threadLimit = 100;
+	int numCores = 8;
+	int threadLimit = 1000;
 
-	Simulation simulation(numUsers, bufferSize, numCores, tQuantum, threadLimit, true);
-	simulation.simulate(1000);
+	Time tQuantum = 100;
+	Time csTime = 0.01;
+	Time totalSimulationTime = 1000;
+	Time transientTime = totalSimulationTime / 10;
+
+	Time thinkMean = 5;
+	Time thinkVariance = 1;
+
+	Time serviceConst = 2;
+	Time serviceUniformMin = 1;
+	Time serviceUniformMax = 3;
+	Time serviceExpMean = 2;
+	float serviceProb1 = 0.2;
+	float serviceProb2 = 0.5;
+
+	Time timeOutMinm = 10;
+	Time timeOutExpMean = 5;
+
+	TimeDistribution::setSeed(seed);
+	TimeDistribution::setThinkTimeDistribution(thinkMean, thinkVariance);
+	TimeDistribution::setServiceTimeDistribution(serviceConst, serviceUniformMin, serviceUniformMax, serviceExpMean, serviceProb1, serviceProb2);
+	TimeDistribution::setTimeOutDistribution(timeOutMinm, timeOutExpMean);
+
+	Simulation simulation(numUsers, bufferSize, numCores, threadLimit, tQuantum, csTime, transientTime, true);
+	simulation.simulate(totalSimulationTime);
 	simulation.printMetrics();
 
 	return 0;

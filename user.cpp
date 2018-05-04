@@ -1,6 +1,7 @@
 #include "user.h"
 #include "event_handler.h"
 #include "request.h"
+#include "time_distribution.h"
 
 User::User()
 {
@@ -10,17 +11,15 @@ User::User()
 
 Time User::startThinking(Time t)
 {
-	// TODO(Distribution): Think Time
 	status = THINK;
-	Time thinkTime = 1.5;
+	Time thinkTime = TimeDistribution::getThinkTime();
 	EventHandler::getInstance()->addNewReqEvent(t + thinkTime, this);
 }
 
 Request* User::issueRequest(Time t)
 {
 	issuedReq = new Request(this, t);
-	//TODO(Distribution): Timeout
-	Time timeout = 2.5;
+	Time timeout = TimeDistribution::getTimeOutTime();
 	EventHandler::getInstance()->addReqTimeOutEvent(t + timeout, issuedReq);
 	status = WAIT;
 
