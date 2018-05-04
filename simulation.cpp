@@ -115,7 +115,7 @@ public:
 	Metrics(Time metricStartTime)
 	{
 		startTime = metricStartTime;
-		lastAreaUpdateTime = -1;
+		lastAreaUpdateTime = metricStartTime;
 		numGoodReqCompleted = 0;
 		numBadReqCompleted = 0;
 		numReqDropped = 0;
@@ -133,7 +133,7 @@ public:
 			numReqArea += (q.getNumReq() * (t - lastAreaUpdateTime));
 			coreUtilizationArea += (q.getNumCoresInUse() * (t - lastAreaUpdateTime));
 		}
-		lastAreaUpdateTime = t;
+		lastAreaUpdateTime = max(t, lastAreaUpdateTime);
 	}
 
 	void updateReqComp(Request* req, Time t)
@@ -278,22 +278,17 @@ public:
 				case REQ_TOUT:
 				{
 					Request* req = (Request*) e.getPtr();
-					if (req->isCompleted())
+					if (req->isCompleted() || req->isDropped())
 					{
-						// Ignore and delete if already completed
+						// Ignore and delete if already completed or dropped
 						delete req;
+						// Don't print this event
+						continue;
 					}
 					else
 					{
-						if (req->isDropped())
-						{
-							delete req;
-						}
-						else
-						{
-							// Timeout request to update status
-							req->timeout();
-						}
+						// Timeout request to update status
+						req->timeout();
 						// User starts thinking, before resending the request
 						User* user = req->getIssuer();
 						user->startThinking(simulationTime);
@@ -328,29 +323,65 @@ public:
 
 int main()
 {
-	int seed = 0;
-	int numUsers = 20;
-	int bufferSize = 200;
-	int numCores = 8;
-	int threadLimit = 1000;
+	// int seed = 999;
+	// int numUsers = 20;
+	// int bufferSize = 200;
+	// int numCores = 8;
+	// int threadLimit = 100;
 
-	Time tQuantum = 100;
-	Time csTime = 0.01;
-	Time totalSimulationTime = 1000;
-	Time transientTime = totalSimulationTime / 10;
+	// Time tQuantum = 100;
+	// Time csTime = 0.01;
+	// Time totalSimulationTime = 1000;
+	// Time transientTime = totalSimulationTime / 10;
 
-	Time thinkMean = 5;
-	Time thinkVariance = 1;
+	// Time thinkMean = 5;
+	// Time thinkVariance = 1;
 
-	Time serviceConst = 2;
-	Time serviceUniformMin = 1;
-	Time serviceUniformMax = 3;
-	Time serviceExpMean = 2;
-	float serviceProb1 = 0.2;
-	float serviceProb2 = 0.5;
+	// Time serviceConst = 2;
+	// Time serviceUniformMin = 1;
+	// Time serviceUniformMax = 3;
+	// Time serviceExpMean = 2;
+	// float serviceProb1 = 0.2;
+	// float serviceProb2 = 0.5;
 
-	Time timeOutMinm = 10;
-	Time timeOutExpMean = 5;
+	// Time timeOutMinm = 10;
+	// Time timeOutExpMean = 5;
+
+	int seed;
+	int numUsers, numCores;
+	int bufferSize, threadLimit;
+
+	Time tQuantum, csTime, totalSimulationTime, transientTime;
+	Time thinkMean, thinkVariance;
+	Time serviceConst, serviceUniformMin, serviceUniformMax, serviceExpMean;
+	Time timeOutMinm, timeOutExpMean;
+	float serviceProb1, serviceProb2;
+
+	cin >> seed;
+	cin >> numUsers;
+	cin >> numCores;
+	cin >> bufferSize;
+	cin >> threadLimit;
+
+	cin >> tQuantum;
+	cin >> csTime;
+	cin >> transientTime;
+	cin >> totalSimulationTime;
+
+	cin >> thinkMean;
+	cin >> thinkVariance;
+
+	cin >> serviceConst;
+	cin >> serviceProb1;
+
+	cin >> serviceUniformMin;
+	cin >> serviceUniformMax;
+	cin >> serviceProb2;
+
+	cin >> serviceExpMean;
+
+	cin >> timeOutMinm;
+	cin >> timeOutExpMean;
 
 	TimeDistribution::setSeed(seed);
 	TimeDistribution::setThinkTimeDistribution(thinkMean, thinkVariance);
