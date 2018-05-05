@@ -140,6 +140,7 @@ def little_law_plot(data):
 
 if __name__ == '__main__':
     if not os.path.exists('graphs'):
+        os.makedirs('graphs')
     results = []
     query = ''
     size = 0
@@ -201,6 +202,7 @@ if __name__ == '__main__':
     resptime_plot(results)
     resptime_CI_plot(results, 0.95)
     resptime_CI_plot(results, 0.9)
+    resptime_CI_plot(results, 0.99)
     resptime_CI_plot(results, 0.999)
     cores_plot(results)
     numreqs_plot(results)
