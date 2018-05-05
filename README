@@ -1,0 +1,11 @@
+To compile the code run `make`
+To run the code run `./simulation < input-file`
+The format of input file can be seen from file input-format
+Some sample input are present in directory sample-input
+
+Script `test.sh` generates sample inputs in directory `input`,
+runs them and generate output file in directory `output` and
+gives consolidates results in file `results.txt`
+
+Python Code `plot.py` uses this result file to generate plots
+in directory `graphs`

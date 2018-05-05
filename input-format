@@ -1,0 +1,8 @@
+#Users #Cores BufSize ThreadLimit
+tQuantum contextSwitchtime
+transientTime totalSimTime
+thinkMean thinkVariance
+serviceConst prob1
+serviceUniformMin serviceUniformMax prob2
+serviceExpMean
+timeOutMinm timeOutExpMean
