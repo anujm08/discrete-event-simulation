@@ -33,7 +33,7 @@ public:
 
 	Request* getCurrentExecutingRequest() const;
 
-	void scheduleThread(Time t);
+	void scheduleThread(Time t, bool contextSwitch);
 	void removeCurrentThread(Time t);
 	void contextSwitch(Time t);
 	void addThread(Thread* thr, Time t);

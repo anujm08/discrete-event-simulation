@@ -111,6 +111,7 @@ class Metrics
 	int numGoodReqCompleted;
 	int numBadReqCompleted;
 	int numReqDropped;
+	int numReqAccepted;
 	Time goodRespTimeTotal;
 	Time badRespTimeTotal;
 	double coreUtilizationArea;
@@ -124,6 +125,7 @@ public:
 		numGoodReqCompleted = 0;
 		numBadReqCompleted = 0;
 		numReqDropped = 0;
+		numReqAccepted = 0;
 		goodRespTimeTotal = 0.0;
 		badRespTimeTotal = 0.0;
 		coreUtilizationArea = 0.0;
@@ -158,10 +160,13 @@ public:
 		}
 	}
 
-	void incrementReqDropped(Time t)
+	void incrementReqDropped(Time t, bool status)
 	{
 		if (t > startTime)
-			numReqDropped++;
+			if (status)
+				numReqDropped++;
+			else
+				numReqAccepted++;
 	}
 
 	void print()
@@ -180,6 +185,8 @@ public:
 		cout << "Goodput: " << 1.0 * numGoodReqCompleted / totalTime << endl;
 		cout << "Badput: " << 1.0 * numBadReqCompleted / totalTime << endl;
 		cout << "Throughput: " << 1.0 * (numGoodReqCompleted + numBadReqCompleted) / totalTime << endl;
+		cout << "Drop Rate: " << 1.0 * numReqDropped / totalTime << endl;
+		cout << "Loss Probability: " << 1.0 * numReqDropped / (numReqDropped + numReqAccepted) << endl;
 
 		cout << "Response Time of Good Reqs: ";
 		if (numGoodReqCompleted > 0)
@@ -254,9 +261,9 @@ public:
 					if (addStatus != 0)
 					{
 						req->setDropped();
-						metrics.incrementReqDropped(simulationTime);
 						remarks += "--DROPPED";
 					}
+					metrics.incrementReqDropped(simulationTime, (addStatus != 0));
 					break;
 				}
 				case REQ_COMP:
@@ -369,7 +376,7 @@ int main()
 	// Time timeOutMinm = 10;
 	// Time timeOutExpMean = 5;
 
-	int seed;
+	int seed, printlog;
 	int numUsers, numCores;
 	int bufferSize, threadLimit;
 
@@ -380,6 +387,8 @@ int main()
 	float serviceProb1, serviceProb2;
 
 	cin >> seed;
+	cin >> printlog;
+
 	cin >> numUsers;
 	cin >> numCores;
 	cin >> bufferSize;
@@ -410,7 +419,7 @@ int main()
 	TimeDistribution::setServiceTimeDistribution(serviceConst, serviceUniformMin, serviceUniformMax, serviceExpMean, serviceProb1, serviceProb2);
 	TimeDistribution::setTimeOutDistribution(timeOutMinm, timeOutExpMean);
 
-	Simulation simulation(numUsers, bufferSize, numCores, threadLimit, tQuantum, csTime, transientTime, true);
+	Simulation simulation(numUsers, bufferSize, numCores, threadLimit, tQuantum, csTime, transientTime, (printlog == 1));
 	simulation.simulate(totalSimulationTime);
 	simulation.printMetrics();
 

@@ -36,8 +36,7 @@ Request* Core::getCurrentExecutingRequest() const
 	return (*currentThreadIter)->getRequest();
 }
 
-// TODO(distribution): Keep In mind context switch overhead
-void Core::scheduleThread(Time t)
+void Core::scheduleThread(Time t, bool contextSwitch)
 {
 	if (threads.size() == 0)
 	{
@@ -49,7 +48,7 @@ void Core::scheduleThread(Time t)
 	}
 	else
 	{
-		Time contextswitchTime = server->getContextSwitchTime();
+		Time contextswitchTime = (contextSwitch) ? server->getContextSwitchTime() : 0;
 		if (currentThreadIter == threads.end())
 		{
 			currentThreadIter = threads.begin();
@@ -59,7 +58,6 @@ void Core::scheduleThread(Time t)
 		{
 			status = BUSY;
 			server->incrementCoresInUse();
-			contextswitchTime = 0;
 		}
 
 		Thread* thr = *currentThreadIter;
@@ -89,7 +87,7 @@ void Core::removeCurrentThread(Time t)
 	thr->stopRequest(t);
 	currentThreadIter = threads.erase(currentThreadIter);
 	server->removeThread();
-	scheduleThread(t);
+	scheduleThread(t, false);
 }
 
 void Core::contextSwitch(Time t)
@@ -102,14 +100,22 @@ void Core::contextSwitch(Time t)
 
 	Thread* thr = *currentThreadIter;
 	thr->stopRequest(t);
-	currentThreadIter++;
-	scheduleThread(t);
+
+	if (threads.size() == 1)
+	{
+		scheduleThread(t, false);
+	}
+	else
+	{
+		currentThreadIter++;
+		scheduleThread(t, true);
+	}
 }
 void Core::addThread(Thread* thr, Time t)
 {
 	threads.push_back(thr);
 	if (status == IDLE)
 	{
-		scheduleThread(t);
+		scheduleThread(t, false);
 	}
 }
