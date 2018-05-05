@@ -21,3 +21,4 @@ $(ODIR)/%.o: %.cpp $(DEPS)
 .PHONY: clean
 clean:
 	$(RM) -r $(ODIR)
+	$(RM) simulation
