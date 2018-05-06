@@ -5,7 +5,9 @@ Some sample input are present in directory sample-input
 
 Script `test.sh` generates sample inputs in directory `input`,
 runs them and generate output file in directory `output` and
-gives consolidates results in file `results.txt`
+gives consolidates results in file `results.txt`. It uses the
+file `randomseeds.txt` for seeds of different testcases. The
+seeds have been included for reproducibility of exact results
 
 Python Code `plot.py` uses this result file to generate plots
 in directory `graphs`

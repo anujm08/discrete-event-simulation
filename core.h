@@ -20,10 +20,10 @@ class Core
 	int id;
 	CoreStatus status;
 	Server* server;
-
-public:
 	std::list<Thread*> threads;
 	std::list<Thread*>::iterator currentThreadIter;
+
+public:
 	Core(Server* serverPtr, int coreID);
 	Core(const Core&) = delete;
 

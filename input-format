@@ -1,3 +1,4 @@
+#seed #printlog
 #Users #Cores BufSize ThreadLimit
 tQuantum contextSwitchtime
 transientTime totalSimTime
